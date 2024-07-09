@@ -65,7 +65,6 @@
         </div>
         <div class="actions">
             <input type="number" id="amount" placeholder="Enter amount">
-            <br>
             <button onclick="deposit()">Deposit</button>
             <button onclick="withdraw()">Withdraw</button>
         </div>
@@ -84,7 +83,9 @@
         const transactionHistoryElement = document.getElementById('transaction-history');
         const timerElement = document.getElementById('timer');
         const amountElement = document.getElementById('amount');
-        
+        const oneMonthInSeconds = 30 * 24 * 60 * 60;
+        let remainingTime = oneMonthInSeconds;
+
         function updateBalance() {
             balanceElement.innerText = balance.toFixed(2);
         }
@@ -124,11 +125,14 @@
         function saveData() {
             localStorage.setItem('balance', balance);
             localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+            localStorage.setItem('remainingTime', remainingTime);
         }
 
         function loadData() {
             const savedBalance = localStorage.getItem('balance');
             const savedHistory = localStorage.getItem('transactionHistory');
+            const savedRemainingTime = localStorage.getItem('remainingTime');
+            
             if (savedBalance !== null) {
                 balance = parseFloat(savedBalance);
                 updateBalance();
@@ -141,12 +145,12 @@
                     transactionHistoryElement.appendChild(listItem);
                 });
             }
+            if (savedRemainingTime !== null) {
+                remainingTime = parseInt(savedRemainingTime, 10);
+            }
         }
 
         function startTimer() {
-            const oneMonthInSeconds = 30 * 24 * 60 * 60;
-            let remainingTime = oneMonthInSeconds;
-            
             function updateTimer() {
                 remainingTime--;
                 const days = String(Math.floor(remainingTime / (24 * 60 * 60))).padStart(2, '0');
@@ -158,9 +162,9 @@
                     balance += 40;
                     updateBalance();
                     addTransaction('Auto Add', 40);
-                    saveData();
                     remainingTime = oneMonthInSeconds;
                 }
+                saveData();
             }
             setInterval(updateTimer, 1000);
         }
