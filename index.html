@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        .balance, .actions, .timer, .history {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #ddd;
+        }
+
+        .history {
+            text-align: left;
+        }
+
+        .history ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .history li {
+            background: #f9f9f9;
+            margin-bottom: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bank App</h1>
+        <div class="balance">
+            <p>Balance: <span id="balance">0</span> Rs</p>
+        </div>
+        <div class="actions">
+            <input type="number" id="amount" placeholder="Enter amount">
+            <br>
+            <button onclick="deposit()">Deposit</button>
+            <button onclick="withdraw()">Withdraw</button>
+        </div>
+        <div class="timer">
+            <p>Time until next addition: <span id="timer">00:00:00</span></p>
+        </div>
+        <div class="history">
+            <h2>Transaction History</h2>
+            <ul id="transaction-history"></ul>
+        </div>
+    </div>
+    <script>
+        let balance = 0;
+        let transactionHistory = [];
+        const balanceElement = document.getElementById('balance');
+        const transactionHistoryElement = document.getElementById('transaction-history');
+        const timerElement = document.getElementById('timer');
+        const amountElement = document.getElementById('amount');
+        
+        function updateBalance() {
+            balanceElement.innerText = balance.toFixed(2);
+        }
+
+        function addTransaction(type, amount) {
+            const transaction = {
+                type,
+                amount: parseFloat(amount),
+                date: new Date().toLocaleString()
+            };
+            transactionHistory.push(transaction);
+            const listItem = document.createElement('li');
+            listItem.textContent = `${transaction.date} - ${transaction.type}: ${transaction.amount} Rs`;
+            transactionHistoryElement.appendChild(listItem);
+        }
+
+        function deposit() {
+            const amount = parseFloat(amountElement.value);
+            if (!isNaN(amount) && amount > 0) {
+                balance += amount;
+                updateBalance();
+                addTransaction('Deposit', amount);
+                saveData();
+            }
+        }
+
+        function withdraw() {
+            const amount = parseFloat(amountElement.value);
+            if (!isNaN(amount) && amount > 0 && amount <= balance) {
+                balance -= amount;
+                updateBalance();
+                addTransaction('Withdraw', amount);
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('balance', balance);
+            localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+        }
+
+        function loadData() {
+            const savedBalance = localStorage.getItem('balance');
+            const savedHistory = localStorage.getItem('transactionHistory');
+            if (savedBalance !== null) {
+                balance = parseFloat(savedBalance);
+                updateBalance();
+            }
+            if (savedHistory !== null) {
+                transactionHistory = JSON.parse(savedHistory);
+                transactionHistory.forEach(transaction => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${transaction.date} - ${transaction.type}: ${transaction.amount} Rs`;
+                    transactionHistoryElement.appendChild(listItem);
+                });
+            }
+        }
+
+        function startTimer() {
+            const oneMonthInSeconds = 30 * 24 * 60 * 60;
+            let remainingTime = oneMonthInSeconds;
+            
+            function updateTimer() {
+                remainingTime--;
+                const days = String(Math.floor(remainingTime / (24 * 60 * 60))).padStart(2, '0');
+                const hours = String(Math.floor((remainingTime % (24 * 60 * 60)) / (60 * 60))).padStart(2, '0');
+                const minutes = String(Math.floor((remainingTime % (60 * 60)) / 60)).padStart(2, '0');
+                const seconds = String(remainingTime % 60).padStart(2, '0');
+                timerElement.textContent = `${days}:${hours}:${minutes}:${seconds}`;
+                if (remainingTime <= 0) {
+                    balance += 40;
+                    updateBalance();
+                    addTransaction('Auto Add', 40);
+                    saveData();
+                    remainingTime = oneMonthInSeconds;
+                }
+            }
+            setInterval(updateTimer, 1000);
+        }
+
+        window.onload = function() {
+            loadData();
+            startTimer();
+        };
+    </script>
+</body>
+</html>
